@@ -1,0 +1,76 @@
+package ar.edu.utn.dds.k3003.model.app;
+
+import ar.edu.utn.dds.k3003.facades.FachadaFuente;
+import ar.edu.utn.dds.k3003.facades.FachadaSolicitudes;
+import ar.edu.utn.dds.k3003.facades.dtos.EstadoSolicitudBorradoEnum;
+import ar.edu.utn.dds.k3003.facades.dtos.SolicitudDTO;
+import ar.edu.utn.dds.k3003.model.Model.Solicitud;
+import ar.edu.utn.dds.k3003.model.Repository.JpaSolicitudRepository;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
+
+import java.util.List;
+import java.util.NoSuchElementException;
+import java.util.stream.Collectors;
+
+@Service
+public class Fachada implements FachadaSolicitudes {
+
+    private final JpaSolicitudRepository solicitudRepository;
+    private FachadaFuente fachadaFuente;
+
+    @Autowired
+    public Fachada(JpaSolicitudRepository solicitudRepository) {
+        this.solicitudRepository = solicitudRepository;
+    }
+
+    @Override
+    public SolicitudDTO agregar(SolicitudDTO dto) {
+        if (dto.hechoId() == null) {
+            throw new IllegalArgumentException("El hechoId no puede ser nulo o vacío.");
+        }
+        if (dto.descripcion() == null || dto.descripcion().length() < 500) {
+            throw new IllegalArgumentException("La descripción debe tener al menos 500 caracteres.");
+        }
+
+        Solicitud solicitud = new Solicitud(dto.hechoId(), dto.descripcion());
+        solicitudRepository.save(solicitud);
+        return solicitud.toDTO();
+    }
+
+    @Override
+    public SolicitudDTO modificar(String solicitudId, EstadoSolicitudBorradoEnum estado, String descripcion) {
+        Solicitud solicitud = solicitudRepository.findById(solicitudId)
+                .orElseThrow(() -> new NoSuchElementException("Solicitud no encontrada"));
+        solicitud.setEstado(estado);
+        solicitud.setDescripcion(descripcion);
+        solicitudRepository.save(solicitud);
+        return solicitud.toDTO();
+    }
+
+    @Override
+    public List<SolicitudDTO> buscarSolicitudXHecho(String hechoId) {
+        return solicitudRepository.findByHechoId(hechoId).stream()
+                .map(Solicitud::toDTO)
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public SolicitudDTO buscarSolicitudXId(String solicitudId) {
+        return solicitudRepository.findById(solicitudId)
+                .map(Solicitud::toDTO)
+                .orElseThrow(() -> new NoSuchElementException("Solicitud no encontrada"));
+    }
+
+    @Override
+    public boolean estaActivo(String hechoId) {
+        return solicitudRepository.findByHechoId(hechoId).stream()
+                .noneMatch(s -> s.getEstado() == EstadoSolicitudBorradoEnum.ACEPTADA);
+    }
+
+    @Override
+    public void setFachadaFuente(FachadaFuente fachadaFuente) {
+        this.fachadaFuente = fachadaFuente;
+    }
+}
