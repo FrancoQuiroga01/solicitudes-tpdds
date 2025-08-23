@@ -4,13 +4,13 @@
 #
 FROM maven:3.8.6-openjdk-18 AS build
 COPY . .
-# RUN mvn clean package assembly:single -DskipTests
+#RUN mvn clean package assembly:single -DskipTests
 
 #
 # Package stage
 #
 FROM openjdk:17-jdk-slim
-COPY --from=build /target/TPDDSApp.jar TPDDSApp.jar
+COPY --from=build /target/my-app-name-1.0-SNAPSHOT.jar my-app-name-1.0-SNAPSHOT.jar
 # ENV PORT=8080
 EXPOSE 8080
-ENTRYPOINT ["java","-classpath","TPDDSApp.jar","ar.edu.utn.dds.k3003.app.WebApp"]
+ENTRYPOINT ["java","-classpath","my-app-name-1.0-SNAPSHOT.jar","ar.edu.utn.dds.k3003.model.Application"]
