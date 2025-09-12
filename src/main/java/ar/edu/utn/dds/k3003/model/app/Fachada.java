@@ -8,6 +8,7 @@ import ar.edu.utn.dds.k3003.model.Model.Solicitud;
 import ar.edu.utn.dds.k3003.model.Repository.JpaSolicitudRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 
 import java.util.List;
@@ -26,6 +27,7 @@ public class Fachada implements FachadaSolicitudes {
     }
 
     @Override
+    @Transactional
     public SolicitudDTO agregar(SolicitudDTO dto) {
         if (dto.hechoId() == null) {
             throw new IllegalArgumentException("El hechoId no puede ser nulo o vacío.");
@@ -40,6 +42,7 @@ public class Fachada implements FachadaSolicitudes {
     }
 
     @Override
+    @Transactional
     public SolicitudDTO modificar(String solicitudId, EstadoSolicitudBorradoEnum estado, String descripcion) {
         Solicitud solicitud = solicitudRepository.findById(solicitudId)
                 .orElseThrow(() -> new NoSuchElementException("Solicitud no encontrada"));
@@ -50,6 +53,7 @@ public class Fachada implements FachadaSolicitudes {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public List<SolicitudDTO> buscarSolicitudXHecho(String hechoId) {
         return solicitudRepository.findByHechoId(hechoId).stream()
                 .map(Solicitud::toDTO)
@@ -57,6 +61,7 @@ public class Fachada implements FachadaSolicitudes {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public SolicitudDTO buscarSolicitudXId(String solicitudId) {
         return solicitudRepository.findById(solicitudId)
                 .map(Solicitud::toDTO)
@@ -64,6 +69,7 @@ public class Fachada implements FachadaSolicitudes {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public boolean estaActivo(String hechoId) {
         return solicitudRepository.findByHechoId(hechoId).stream()
                 .noneMatch(s -> s.getEstado() == EstadoSolicitudBorradoEnum.ACEPTADA);
