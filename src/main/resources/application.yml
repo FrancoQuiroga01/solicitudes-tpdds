@@ -6,26 +6,23 @@ spring:
     property-naming-strategy: SNAKE_CASE
 
   datasource:
-    # Si te dan DATABASE_URL estilo: postgres://user:pass@host:port/db
-    url: ${JDBC_DATABASE_URL:jdbc:postgresql://${PGHOST}:${PGPORT}/${PGDATABASE}?sslmode=require}
-    username: ${PGUSER}
-    password: ${PGPASSWORD}
+    url: ${SPRING_DATASOURCE_URL}
+    username: ${SPRING_DATASOURCE_USERNAME}
+    password: ${SPRING_DATASOURCE_PASSWORD}
+    driver-class-name: org.postgresql.Driver
     hikari:
       maximum-pool-size: 5
       minimum-idle: 1
 
   jpa:
     hibernate:
-      ddl-auto: update   # Para arrancar rápido. En producción, preferible Flyway y ddl-auto: validate
+      ddl-auto: update   # para desarrollo, luego mejor usar Flyway + validate
     properties:
       hibernate:
         dialect: org.hibernate.dialect.PostgreSQLDialect
         format_sql: true
         jdbc.lob.non_contextual_creation: true
     open-in-view: false
-  sql:
-    init:
-      mode: never
 
 management:
   endpoints:
