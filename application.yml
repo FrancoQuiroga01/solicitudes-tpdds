@@ -7,9 +7,9 @@ spring:
 
   datasource:
     # Si te dan DATABASE_URL estilo: postgres://user:pass@host:port/db
-    url: ${JDBC_DATABASE_URL:jdbc:postgresql://${PGHOST:localhost}:${PGPORT:5432}/${PGDATABASE:app}?sslmode=require}
-    username: ${PGUSER:postgres}
-    password: ${PGPASSWORD:postgres}
+    url: ${JDBC_DATABASE_URL:jdbc:postgresql://${PGHOST}:${PGPORT}/${PGDATABASE}?sslmode=require}
+    username: ${PGUSER}
+    password: ${PGPASSWORD}
     hikari:
       maximum-pool-size: 5
       minimum-idle: 1
