@@ -32,3 +32,6 @@ management:
   endpoint:
     health:
       show-details: never
+
+fuentes:
+  base-url: ${FUENTES_BASE_URL:https://localhost:8081}

@@ -3,13 +3,12 @@ package ar.edu.utn.dds.k3003.model.app;
 import ar.edu.utn.dds.k3003.facades.FachadaFuente;
 import ar.edu.utn.dds.k3003.facades.FachadaSolicitudes;
 import ar.edu.utn.dds.k3003.facades.dtos.EstadoSolicitudBorradoEnum;
+import ar.edu.utn.dds.k3003.facades.dtos.HechoDTO;
 import ar.edu.utn.dds.k3003.facades.dtos.SolicitudDTO;
 import ar.edu.utn.dds.k3003.model.Model.Solicitud;
 import ar.edu.utn.dds.k3003.model.Repository.JpaSolicitudRepository;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
 
 import java.util.List;
 import java.util.NoSuchElementException;
@@ -19,24 +18,31 @@ import java.util.stream.Collectors;
 public class Fachada implements FachadaSolicitudes {
 
     private final JpaSolicitudRepository solicitudRepository;
-    private FachadaFuente fachadaFuente;
+    private final FachadaFuente fachadaFuente;
 
-    @Autowired
-    public Fachada(JpaSolicitudRepository solicitudRepository) {
+    public Fachada(JpaSolicitudRepository solicitudRepository, FachadaFuente fachadaFuente) {
         this.solicitudRepository = solicitudRepository;
+        this.fachadaFuente = fachadaFuente;
     }
 
     @Override
     @Transactional
     public SolicitudDTO agregar(SolicitudDTO dto) {
-        if (dto.hechoId() == null) {
+        if (dto.hechoId() == null || dto.hechoId().isBlank()) {
             throw new IllegalArgumentException("El hechoId no puede ser nulo o vacío.");
         }
-        if (dto.descripcion() == null || dto.descripcion().length() < 500) {
+        if (dto.descripcion() == null || dto.descripcion().trim().length() < 500) {
             throw new IllegalArgumentException("La descripción debe tener al menos 500 caracteres.");
         }
 
-        Solicitud solicitud = new Solicitud(dto.hechoId(), dto.descripcion());
+        //reviso en Fuentes que el hecho exista. si existe entonces esta activo
+        try {
+            HechoDTO hecho = fachadaFuente.buscarHechoXId(dto.hechoId());
+        } catch (NoSuchElementException e) {
+            throw new IllegalArgumentException("El hecho_id no existe en Fuentes: " + dto.hechoId());
+        }
+
+        Solicitud solicitud = new Solicitud(dto.hechoId(), dto.descripcion().trim());
         solicitudRepository.save(solicitud);
         return solicitud.toDTO();
     }
@@ -46,8 +52,18 @@ public class Fachada implements FachadaSolicitudes {
     public SolicitudDTO modificar(String solicitudId, EstadoSolicitudBorradoEnum estado, String descripcion) {
         Solicitud solicitud = solicitudRepository.findById(solicitudId)
                 .orElseThrow(() -> new NoSuchElementException("Solicitud no encontrada"));
-        solicitud.setEstado(estado);
-        solicitud.setDescripcion(descripcion);
+
+        if (descripcion != null && !descripcion.isBlank() && descripcion.trim().length() < 500) {
+            throw new IllegalArgumentException("La descripción debe tener al menos 500 caracteres.");
+        }
+
+        if (estado != null) {
+            solicitud.setEstado(estado);
+        }
+        if (descripcion != null && !descripcion.isBlank()) {
+            solicitud.setDescripcion(descripcion.trim());
+        }
+
         solicitudRepository.save(solicitud);
         return solicitud.toDTO();
     }
@@ -77,6 +93,6 @@ public class Fachada implements FachadaSolicitudes {
 
     @Override
     public void setFachadaFuente(FachadaFuente fachadaFuente) {
-        this.fachadaFuente = fachadaFuente;
+
     }
 }
