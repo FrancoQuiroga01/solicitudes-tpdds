@@ -91,17 +91,17 @@ public class Fachada implements FachadaSolicitudes {
                 .noneMatch(s -> s.getEstado() == EstadoSolicitudBorradoEnum.ACEPTADA);
     }
 
-//    public boolean noTieneSolicitudes(String hechoId) {
-//        return solicitudRepository.findByHechoId(hechoId).isEmpty();
-//    }
-//
-//    @Transactional(readOnly = true)
-//    public List<String> hechosElegibles(List<String> hechoIds) {
-//        if (hechoIds == null || hechoIds.isEmpty()) return List.of();
-//        return hechoIds.stream()
-//                .filter(this::noTieneSolicitudes)
-//                .toList();
-//    }
+    public boolean noTieneSolicitudes(String hechoId) {
+        return solicitudRepository.findByHechoId(hechoId).isEmpty();
+    }
+
+    @Transactional(readOnly = true)
+    public List<String> hechosElegibles(List<String> hechoIds) {
+        if (hechoIds == null || hechoIds.isEmpty()) return List.of();
+        return hechoIds.stream()
+                .filter(this::noTieneSolicitudes)
+                .toList();
+    }
     @Override
     public void setFachadaFuente(FachadaFuente fachadaFuente) {
 
