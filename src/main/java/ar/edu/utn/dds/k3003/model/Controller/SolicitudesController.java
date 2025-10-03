@@ -45,20 +45,18 @@ public class SolicitudesController {
         return ResponseEntity.ok(fachada.modificar(id, estado, descripcion));
     }
 
-    /** Puntual: retorna si el hecho NO tiene solicitudes */
-    @GetMapping("/hechos/{hechoId}/sin-solicitudes")
-    public ResponseEntity<Map<String, Object>> sinSolicitudes(@PathVariable String hechoId) {
-        boolean ok = ((ar.edu.utn.dds.k3003.model.app.Fachada)fachada).noTieneSolicitudes(hechoId);
-        return ResponseEntity.ok(Map.of("hechoId", hechoId, "sinSolicitudes", ok));
-    }
-
-    /** Batch: devuelve solo los IDs elegibles (sin solicitudes) */
-    @PostMapping("/hechos/hechos-sin-solicitudes")
-    public ResponseEntity<Map<String, List<String>>> elegibles(@RequestBody Map<String, List<String>> body) {
-        var ids = body.getOrDefault("ids", List.of());
-        var elegibles = ((ar.edu.utn.dds.k3003.model.app.Fachada)fachada).hechosElegibles(ids);
-        return ResponseEntity.ok(Map.of("elegibles", elegibles));
-    }
+//    @GetMapping("/hechos/{hechoId}/sin-solicitudes")
+//    public ResponseEntity<Map<String, Object>> sinSolicitudes(@PathVariable String hechoId) {
+//        boolean ok = ((ar.edu.utn.dds.k3003.model.app.Fachada)fachada).noTieneSolicitudes(hechoId);
+//        return ResponseEntity.ok(Map.of("hechoId", hechoId, "sinSolicitudes", ok));
+//    }
+//
+//    @PostMapping("/hechos/hechos-sin-solicitudes")
+//    public ResponseEntity<Map<String, List<String>>> elegibles(@RequestBody Map<String, List<String>> body) {
+//        var ids = body.getOrDefault("ids", List.of());
+//        var elegibles = ((ar.edu.utn.dds.k3003.model.app.Fachada)fachada).hechosElegibles(ids);
+//        return ResponseEntity.ok(Map.of("elegibles", elegibles));
+//    }
 
 
 
