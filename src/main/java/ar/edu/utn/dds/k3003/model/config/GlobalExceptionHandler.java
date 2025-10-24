@@ -4,36 +4,31 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 import java.security.InvalidParameterException;
 import java.util.NoSuchElementException;
 import java.util.HashMap;
 import java.util.Map;
 
-@ControllerAdvice
+@RestControllerAdvice
 public class GlobalExceptionHandler {
 
     @ExceptionHandler(NoSuchElementException.class)
-    public ResponseEntity<Map<String, String>> handleNoSuchElementException(NoSuchElementException e) {
-        Map<String, String> response = new HashMap<>();
-        response.put("error", "Not Found");
-        response.put("message", e.getMessage());
-        return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
+    public ResponseEntity<Map<String, String>> handleNotFound(NoSuchElementException ex) {
+        return ResponseEntity.status(404)
+                .body(Map.of("error", ex.getMessage() != null ? ex.getMessage() : "Recurso no encontrado"));
     }
 
-    @ExceptionHandler(InvalidParameterException.class)
-    public ResponseEntity<Map<String, String>> handleInvalidParameterException(InvalidParameterException e) {
-        Map<String, String> response = new HashMap<>();
-        response.put("error", "Bad Request");
-        response.put("message", e.getMessage());
-        return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
+    @ExceptionHandler(IllegalArgumentException.class)
+    public ResponseEntity<Map<String, String>> handleBadRequest(IllegalArgumentException ex) {
+        return ResponseEntity.badRequest()
+                .body(Map.of("error", ex.getMessage() != null ? ex.getMessage() : "Solicitud inválida"));
     }
 
     @ExceptionHandler(Exception.class)
-    public ResponseEntity<Map<String, String>> handleGenericException(Exception e) {
-        Map<String, String> response = new HashMap<>();
-        response.put("error", "Internal Server Error");
-        response.put("message", e.getMessage()); // ← ver mensaje real
-        return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
+    public ResponseEntity<Map<String, String>> handleGeneric(Exception ex) {
+        return ResponseEntity.internalServerError()
+                .body(Map.of("error", "Error interno del servidor"));
     }
 }

@@ -5,11 +5,13 @@ import ar.edu.utn.dds.k3003.facades.FachadaSolicitudes;
 import ar.edu.utn.dds.k3003.facades.dtos.ColeccionDTO;
 import ar.edu.utn.dds.k3003.facades.dtos.EstadoSolicitudBorradoEnum;
 import ar.edu.utn.dds.k3003.facades.dtos.SolicitudDTO;
+import io.micrometer.core.annotation.Timed;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import java.util.List;
 import java.util.Map;
+import java.net.URI;
 
 @RestController
 @RequestMapping("/solicitudes")
@@ -33,10 +35,15 @@ public class SolicitudesController {
     }
 
 
+    @Timed(value="http.solicitudes.post.latency", histogram = true, percentiles = {0.5,0.95,0.99})
     @PostMapping
     public ResponseEntity<SolicitudDTO> crear(@RequestBody SolicitudDTO solicitud) {
-        return ResponseEntity.ok(fachada.agregar(solicitud));
+        var dto = fachada.agregar(solicitud);
+        return ResponseEntity
+                .created(URI.create("/solicitudes/" + dto.id()))
+                .body(dto);
     }
+
 
     @PatchMapping
     public ResponseEntity<SolicitudDTO> modificar(@RequestParam("id") String id,
@@ -44,6 +51,16 @@ public class SolicitudesController {
                                                   @RequestParam("descripcion") String descripcion) {
         return ResponseEntity.ok(fachada.modificar(id, estado, descripcion));
     }
+
+    @PatchMapping("/{id}/estado")
+    public ResponseEntity<SolicitudDTO> cambiarEstado(
+            @PathVariable String id,
+            @RequestParam EstadoSolicitudBorradoEnum estado,
+            @RequestBody(required = false) Map<String,String> body) {
+        String nuevaDesc = body != null ? body.get("descripcion") : null;
+        return ResponseEntity.ok(fachada.modificar(id, estado, nuevaDesc));
+    }
+
 
     @GetMapping("/hechos/{hechoId}/sin-solicitudes")
     public ResponseEntity<Map<String, Object>> sinSolicitudes(@PathVariable String hechoId) {

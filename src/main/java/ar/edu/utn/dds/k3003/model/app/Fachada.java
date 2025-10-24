@@ -9,6 +9,11 @@ import ar.edu.utn.dds.k3003.model.Model.Solicitud;
 import ar.edu.utn.dds.k3003.model.Repository.JpaSolicitudRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.Counter;
+import io.micrometer.core.instrument.Timer;
+import io.micrometer.core.instrument.DistributionSummary;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.List;
 import java.util.NoSuchElementException;
@@ -20,6 +25,36 @@ public class Fachada implements FachadaSolicitudes {
     private final JpaSolicitudRepository solicitudRepository;
     private final FachadaFuente fachadaFuente;
 
+    // --- Métricas (campos) ---
+    private Counter creadasCounter;
+    private Counter errorHechoNoExisteCounter;
+    private Timer crearTimer;
+    private DistributionSummary descripcionLen;
+
+
+    @Autowired
+    void bindMeters(MeterRegistry registry) {
+        this.creadasCounter = Counter.builder("solicitudes.creadas")
+                .description("Solicitudes creadas")
+                .tag("estado", "CREADA")
+                .register(registry);
+
+        this.errorHechoNoExisteCounter = Counter.builder("solicitudes.error")
+                .description("Errores al crear solicitudes")
+                .tag("tipo", "HECHO_NO_EXISTE")
+                .register(registry);
+
+        this.crearTimer = Timer.builder("solicitudes.crear.latencia")
+                .description("Latencia de POST /solicitudes")
+                .publishPercentileHistogram()
+                .register(registry);
+
+        this.descripcionLen = DistributionSummary.builder("solicitudes.descripcion.length")
+                .description("Largo de la descripción al crear")
+                .publishPercentileHistogram()
+                .register(registry);
+    }
+
     public Fachada(JpaSolicitudRepository solicitudRepository, FachadaFuente fachadaFuente) {
         this.solicitudRepository = solicitudRepository;
         this.fachadaFuente = fachadaFuente;
@@ -28,22 +63,25 @@ public class Fachada implements FachadaSolicitudes {
     @Override
     @Transactional
     public SolicitudDTO agregar(SolicitudDTO dto) {
+        final Timer.Sample sample = Timer.start();
         if (dto.hechoId() == null || dto.hechoId().isBlank()) {
             throw new IllegalArgumentException("El hechoId no puede ser nulo o vacío.");
         }
         if (dto.descripcion() == null || dto.descripcion().trim().length() < 500) {
             throw new IllegalArgumentException("La descripción debe tener al menos 500 caracteres.");
         }
-
-        //reviso en Fuentes que el hecho exista. si existe entonces esta activo
+        descripcionLen.record(dto.descripcion().trim().length());
         try {
             HechoDTO hecho = fachadaFuente.buscarHechoXId(dto.hechoId());
         } catch (NoSuchElementException e) {
+            errorHechoNoExisteCounter.increment();
             throw new IllegalArgumentException("El hecho_id no existe en Fuentes: " + dto.hechoId());
         }
 
         Solicitud solicitud = new Solicitud(dto.hechoId(), dto.descripcion().trim());
         solicitudRepository.save(solicitud);
+        creadasCounter.increment();
+        sample.stop(crearTimer);
         return solicitud.toDTO();
     }
 
