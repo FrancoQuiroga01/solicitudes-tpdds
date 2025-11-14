@@ -7,6 +7,7 @@ import ar.edu.utn.dds.k3003.facades.dtos.HechoDTO;
 import ar.edu.utn.dds.k3003.facades.dtos.SolicitudDTO;
 import ar.edu.utn.dds.k3003.model.Model.Solicitud;
 import ar.edu.utn.dds.k3003.model.Repository.JpaSolicitudRepository;
+import ar.edu.utn.dds.k3003.model.clients.BuscadorProxy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import io.micrometer.core.instrument.MeterRegistry;
@@ -24,6 +25,7 @@ public class Fachada implements FachadaSolicitudes {
 
     private final JpaSolicitudRepository solicitudRepository;
     private final FachadaFuente fachadaFuente;
+    private BuscadorProxy buscadorProxy;
 
     // --- Métricas (campos) ---
     private Counter creadasCounter;
@@ -95,6 +97,8 @@ public class Fachada implements FachadaSolicitudes {
             throw new IllegalArgumentException("La descripción debe tener al menos 500 caracteres.");
         }
 
+        EstadoSolicitudBorradoEnum estadoAnterior = solicitud.getEstado();
+
         if (estado != null) {
             solicitud.setEstado(estado);
         }
@@ -103,6 +107,12 @@ public class Fachada implements FachadaSolicitudes {
         }
 
         solicitudRepository.save(solicitud);
+
+        if (estadoAnterior != EstadoSolicitudBorradoEnum.ACEPTADA &&
+                solicitud.getEstado() == EstadoSolicitudBorradoEnum.ACEPTADA) {
+
+            buscadorProxy.ocultarHecho(solicitud.getHechoId());
+        }
         return solicitud.toDTO();
     }
 
