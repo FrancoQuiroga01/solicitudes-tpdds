@@ -25,7 +25,8 @@ public class Fachada implements FachadaSolicitudes {
 
     private final JpaSolicitudRepository solicitudRepository;
     private final FachadaFuente fachadaFuente;
-    private BuscadorProxy buscadorProxy;
+    private final BuscadorProxy buscadorProxy;
+
 
     // --- Métricas (campos) ---
     private Counter creadasCounter;
@@ -57,9 +58,10 @@ public class Fachada implements FachadaSolicitudes {
                 .register(registry);
     }
 
-    public Fachada(JpaSolicitudRepository solicitudRepository, FachadaFuente fachadaFuente) {
+    public Fachada(JpaSolicitudRepository solicitudRepository, FachadaFuente fachadaFuente, BuscadorProxy buscadorProxy) {
         this.solicitudRepository = solicitudRepository;
         this.fachadaFuente = fachadaFuente;
+        this.buscadorProxy = buscadorProxy;
     }
 
     @Override
